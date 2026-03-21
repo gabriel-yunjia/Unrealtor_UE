@@ -112,14 +112,20 @@ void AMatchActor::Tick(float DeltaTime)
 				RightQuad->CachedVertices.Num()));
 	}
 
-	// Draw quad bounding boxes.
+	// Vertex color interpolates red → green based on last frame's Closeness (one-frame lag, imperceptible).
+	FColor VertColor(
+		static_cast<uint8>(FMath::RoundToInt(255.f * (1.f - Closeness))),
+		static_cast<uint8>(FMath::RoundToInt(255.f * Closeness)),
+		0
+	);
+
 	for (int32 i = 0; i < LeftQuad->CachedVertices.Num(); ++i)
 	{
-		DrawDebugPoint(GetWorld(), LeftQuad->CachedVertices[i], 8.f, FColor::Blue, false, 0.f);
+		DrawDebugPoint(GetWorld(), LeftQuad->CachedVertices[i], 8.f, VertColor, false, 0.f);
 	}
 	for (int32 i = 0; i < RightQuad->CachedVertices.Num(); ++i)
 	{
-		DrawDebugPoint(GetWorld(), RightQuad->CachedVertices[i], 8.f, FColor::Red, false, 0.f);
+		DrawDebugPoint(GetWorld(), RightQuad->CachedVertices[i], 8.f, VertColor, false, 0.f);
 	}
 
 	if (!bLeftPlayerNearby || !bRightPlayerNearby) return;
