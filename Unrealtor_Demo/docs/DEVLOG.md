@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-03-22 -- Professional Chinese TDD Baseline
+
+**Summary**: Added a professional Chinese TDD that documents the current implementation baseline of `Unrealtor_Demo` without script-style narration. The document consolidates architecture ownership, core match algorithm flow, config/runtime behavior, spec gaps, risks, and verification criteria.
+
+**Files Changed**:
+- `docs/TDD_Unrealtor_Demo_CN.md` -- new Chinese technical design baseline aligned to current code and config state.
+- `docs/DEVLOG.md` -- added this development log entry.
+
+**Behavior Changes**:
+- None.
+
+**Reasoning**: The requested deliverable was a formal Chinese TDD describing what the repository currently has, not a tutorial script. Capturing implemented scope and explicit spec deltas in one baseline document supports review and handoff accuracy.
+
+---
+
 ## 2026-03-22 -- Chinese Module Tutorial TDD
 
 **Summary**: Produced a module-by-module Chinese technical design teaching document tailored for Lisa, including per-module narration, architecture rationale, blueprint explanation, and PPT assembly guidance. This turns the existing long-form script into a reusable and auditable training artifact.
