@@ -12,7 +12,8 @@ public class Unrealtor_Demo : ModuleRules
 			"CoreUObject",
 			"Engine",
 			"InputCore",
-			"EnhancedInput"
+			"EnhancedInput",
+			"UMG"
 		});
 	}
 }

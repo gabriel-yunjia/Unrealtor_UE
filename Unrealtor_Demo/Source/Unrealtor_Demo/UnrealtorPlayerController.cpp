@@ -3,6 +3,42 @@
 #include "UnrealtorGameMode.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
+#include "Blueprint/UserWidget.h"
+#include "TimerManager.h"
+
+void AUnrealtorPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+	TryCreateAlignmentHUDWidget();
+}
+
+void AUnrealtorPlayerController::TryCreateAlignmentHUDWidget()
+{
+	if (AlignmentHUDWidgetInstance || !IsLocalController() || !AlignmentHUDWidgetClass)
+	{
+		return;
+	}
+
+	if (!GetLocalPlayer())
+	{
+		constexpr int32 MaxRetryCount = 30;
+		if (AlignmentHUDRetryCount >= MaxRetryCount)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("%s: Alignment HUD widget creation failed after retries (no LocalPlayer)."), *GetName());
+			return;
+		}
+
+		++AlignmentHUDRetryCount;
+		GetWorldTimerManager().SetTimerForNextTick(this, &AUnrealtorPlayerController::TryCreateAlignmentHUDWidget);
+		return;
+	}
+
+	AlignmentHUDWidgetInstance = CreateWidget<UUserWidget>(this, AlignmentHUDWidgetClass);
+	if (AlignmentHUDWidgetInstance)
+	{
+		AlignmentHUDWidgetInstance->AddToPlayerScreen();
+	}
+}
 
 void AUnrealtorPlayerController::SetupInputComponent()
 {
@@ -24,6 +60,20 @@ void AUnrealtorPlayerController::SetupInputComponent()
 	{
 		EIC->BindAction(IA_SwitchPlayer, ETriggerEvent::Started, this, &AUnrealtorPlayerController::HandleSwitchPlayer);
 	}
+}
+
+void AUnrealtorPlayerController::SetAlignmentHUDState(bool bInShowAlignmentFrame, float InAutoSubmitNormalized, float InCloseness)
+{
+	bShowAlignmentFrame = bInShowAlignmentFrame;
+	AlignmentAutoSubmitNormalized = FMath::Clamp(InAutoSubmitNormalized, 0.f, 1.f);
+	AlignmentCloseness = FMath::Clamp(InCloseness, 0.f, 1.f);
+
+	OnAlignmentHUDStateUpdated(bShowAlignmentFrame, AlignmentAutoSubmitNormalized, AlignmentCloseness);
+}
+
+void AUnrealtorPlayerController::ResetAlignmentHUDState()
+{
+	SetAlignmentHUDState(false, 0.f, 0.f);
 }
 
 void AUnrealtorPlayerController::HandleMove(const FInputActionValue& Value)

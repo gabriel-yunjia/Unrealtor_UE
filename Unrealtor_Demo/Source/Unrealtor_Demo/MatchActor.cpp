@@ -71,6 +71,8 @@ void AMatchActor::Tick(float DeltaTime)
 
 	if (!CachedGM || !LeftQuad || !RightQuad)
 	{
+		PushAlignmentUI(false, false, 0.f, 0.f);
+
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(
@@ -128,8 +130,16 @@ void AMatchActor::Tick(float DeltaTime)
 		DrawDebugPoint(GetWorld(), RightQuad->CachedVertices[i], 8.f, VertColor, false, 0.f);
 	}
 
-	if (!bLeftPlayerNearby || !bRightPlayerNearby) return;
-	if (!P1 || !P2) return;
+	if (!bLeftPlayerNearby || !bRightPlayerNearby)
+	{
+		PushAlignmentUI(false, false, 0.f, 0.f);
+		return;
+	}
+	if (!P1 || !P2)
+	{
+		PushAlignmentUI(false, false, 0.f, 0.f);
+		return;
+	}
 
 	EvaluateAlignment(DeltaTime);
 }
@@ -138,8 +148,11 @@ void AMatchActor::EvaluateAlignment(float DeltaTime)
 {
 	AUnrealtorPlayerController* PC1 = CachedGM->Player1Controller;
 	AUnrealtorPlayerController* PC2 = CachedGM->Player2Controller;
+	const bool bLeftAlignedPrevFrame = bLeftAligned;
+	const bool bRightAlignedPrevFrame = bRightAligned;
 	if (!PC1 || !PC2)
 	{
+		PushAlignmentUI(false, false, 0.f, 0.f);
 		if (GEngine)
 			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red, TEXT("EvalAlign: PC1 or PC2 null"));
 		return;
@@ -154,6 +167,7 @@ void AMatchActor::EvaluateAlignment(float DeltaTime)
 
 	if (ViewW1 <= 0 || ViewH1 <= 0 || ViewW2 <= 0 || ViewH2 <= 0)
 	{
+		PushAlignmentUI(false, false, 0.f, 0.f);
 		if (GEngine)
 			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red,
 				FString::Printf(TEXT("EvalAlign: Bad viewport: V1=%dx%d V2=%dx%d"), ViewW1, ViewH1, ViewW2, ViewH2));
@@ -183,6 +197,7 @@ void AMatchActor::EvaluateAlignment(float DeltaTime)
 
 	if (LeftScreenVerts.Num() < 2 || RightScreenVerts.Num() < 2)
 	{
+		PushAlignmentUI(false, false, 0.f, 0.f);
 		if (GEngine)
 			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Red,
 				FString::Printf(TEXT("EvalAlign: Not enough screen verts L=%d R=%d"), LeftScreenVerts.Num(), RightScreenVerts.Num()));
@@ -280,6 +295,7 @@ void AMatchActor::EvaluateAlignment(float DeltaTime)
 		if (AutoSubmitTimer >= AutoSubmitDuration)
 		{
 			bIsSolved = true;
+			PushAlignmentUI(false, false, 1.f, 1.f);
 			if (GEngine)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green,
@@ -293,6 +309,49 @@ void AMatchActor::EvaluateAlignment(float DeltaTime)
 		AutoSubmitTimer -= DeltaTime * AutoSubmitDecayRate;
 		AutoSubmitTimer = FMath::Max(AutoSubmitTimer, 0.f);
 	}
+
+	const float AutoSubmitNormalized = (AutoSubmitDuration > KINDA_SMALL_NUMBER)
+		? FMath::Clamp(AutoSubmitTimer / AutoSubmitDuration, 0.f, 1.f)
+		: 0.f;
+	
+	bool bShowLeftUI = false;
+	bool bShowRightUI = false;
+
+	if (bLeftAligned && bRightAligned)
+	{
+		if (bFullMatch)
+		{
+			bShowLeftUI = true;
+			bShowRightUI = true;
+		}
+		else
+		{
+			// Partial state: show one side only. Prefer the side that reached alignment first;
+			// if both were reached together, prefer the side with lower seam error this frame.
+			if (bLeftAlignedPrevFrame && !bRightAlignedPrevFrame)
+			{
+				bShowLeftUI = true;
+			}
+			else if (!bLeftAlignedPrevFrame && bRightAlignedPrevFrame)
+			{
+				bShowRightUI = true;
+			}
+			else
+			{
+				const float LeftSeamError = FMath::Abs(TopLeftDiff) + FMath::Abs(BottomLeftDiff);
+				const float RightSeamError = FMath::Abs(TopRightDiff) + FMath::Abs(BottomRightDiff);
+				bShowLeftUI = LeftSeamError <= RightSeamError;
+				bShowRightUI = !bShowLeftUI;
+			}
+		}
+	}
+	else
+	{
+		bShowLeftUI = bLeftAligned;
+		bShowRightUI = bRightAligned;
+	}
+
+	PushAlignmentUI(bShowLeftUI, bShowRightUI, AutoSubmitNormalized, Closeness);
 
 	// Full alignment debug.
 	if (GEngine)
@@ -324,5 +383,23 @@ void AMatchActor::EvaluateAlignment(float DeltaTime)
 			FString::Printf(TEXT("Viewport: V1=%dx%d V2=%dx%d  |  Projected verts: L=%d R=%d"),
 				ViewW1, ViewH1, ViewW2, ViewH2,
 				LeftScreenVerts.Num(), RightScreenVerts.Num()));
+	}
+}
+
+void AMatchActor::PushAlignmentUI(bool bShowLeftFrame, bool bShowRightFrame, float AutoSubmitNormalized, float InCloseness)
+{
+	if (!CachedGM)
+	{
+		return;
+	}
+
+	if (AUnrealtorPlayerController* PC1 = CachedGM->Player1Controller)
+	{
+		PC1->SetAlignmentHUDState(bShowLeftFrame, AutoSubmitNormalized, InCloseness);
+	}
+
+	if (AUnrealtorPlayerController* PC2 = CachedGM->Player2Controller)
+	{
+		PC2->SetAlignmentHUDState(bShowRightFrame, AutoSubmitNormalized, InCloseness);
 	}
 }

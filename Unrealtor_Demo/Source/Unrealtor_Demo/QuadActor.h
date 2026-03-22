@@ -7,6 +7,7 @@
 
 class AMatchActor;
 class USphereComponent;
+class UAlignmentPointComponent;
 
 UCLASS()
 class AQuadActor : public AActor
@@ -46,6 +47,12 @@ protected:
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<USphereComponent> TriggerSphere;
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	TObjectPtr<UAlignmentPointComponent> DefaultAlignPoint0;
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	TObjectPtr<UAlignmentPointComponent> DefaultAlignPoint1;
 
 	void CacheWorldVertices();
 };

@@ -60,4 +60,5 @@ private:
 	TObjectPtr<AUnrealtorGameMode> CachedGM;
 
 	void EvaluateAlignment(float DeltaTime);
+	void PushAlignmentUI(bool bShowLeftFrame, bool bShowRightFrame, float AutoSubmitNormalized, float InCloseness);
 };
