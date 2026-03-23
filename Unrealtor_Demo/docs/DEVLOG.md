@@ -2,6 +2,38 @@
 
 ---
 
+## 2026-03-22 -- Build Script Aligned To Reference
+
+**Summary**: Rewrote `build.bat` to match the structure and behavior of the user's reference script (`[OpenAfterPull]Build_Project.bat`) for predictable double-click usage. The updated script uses UE 5.6 registry/common-path resolution, pauses on failures, and prompts `Launch editor? [Y/N]` after successful compilation.
+
+**Files Changed**:
+- `build.bat` -- rewritten in reference style for `Unrealtor_DemoEditor Win64 Development`.
+- `docs/DEVLOG.md` -- added this development log entry.
+
+**Behavior Changes**:
+- Double-click now shows clear status/failure messages and pauses on errors instead of exiting immediately.
+- Successful build now uses the same `Y/N` launch prompt flow as the reference script.
+
+**Reasoning**: The previous script behavior did not match the existing team workflow, causing confusion when launched from Explorer. Aligning to a proven script pattern reduces operational friction for designers.
+
+---
+
+## 2026-03-22 -- Root Build Script For Designers
+
+**Summary**: Added a root-level `build.bat` so non-programmer team members can compile the project without opening the Visual Studio solution. The script resolves the UE install path, builds the editor target, and prompts whether to launch Unreal Editor after success.
+
+**Files Changed**:
+- `build.bat` -- new build entrypoint for `Unrealtor_DemoEditor Win64 Development` with engine path discovery and post-build editor prompt.
+- `docs/DEVLOG.md` -- added this development log entry.
+
+**Behavior Changes**:
+- Designers can build from project root by double-clicking `build.bat` instead of opening `.sln`.
+- After a successful build, users can choose to open Unreal Editor immediately.
+
+**Reasoning**: The team needed a low-friction build workflow for non-engineering contributors. A self-contained batch script removes dependency on IDE usage while keeping target/config explicit and reproducible.
+
+---
+
 ## 2026-03-22 -- Professional Chinese TDD Baseline
 
 **Summary**: Added a professional Chinese TDD that documents the current implementation baseline of `Unrealtor_Demo` without script-style narration. The document consolidates architecture ownership, core match algorithm flow, config/runtime behavior, spec gaps, risks, and verification criteria.
